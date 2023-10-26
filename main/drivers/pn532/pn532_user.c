@@ -25,7 +25,7 @@
 #define PN532_SS        25
 #define PN532_MISO      33
 
-static const char *TAG = "PN532";
+static const char *TAG = "NFC reader";
 
 static pn532_t nfc;
 void nfc_task(void *pvParameter) {

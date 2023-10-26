@@ -55,11 +55,10 @@ static void startup_debug(void) {
 
 void app_main(void)
 {
-
     startup_debug();
 
-    pn532_init();
-    prox_i2c_init();
+    //pn532_init();
+    prox_init();
 
     fflush(stdout);
     //esp_restart();
