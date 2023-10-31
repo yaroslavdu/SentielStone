@@ -23,7 +23,7 @@
 
 #include "driver/gpio.h"
 #include "pn532_user.h"
-// #include "vl53l0x_user.h"
+#include "vl53l0x_user.h"
 // #include "vl53l0x_api.h"
 #include "driver/spi_master.h"
 
@@ -58,8 +58,8 @@ void app_main(void)
 {
     startup_debug();
 
-    pn532_init();
-    // prox_init();
+    //pn532_init();
+    prox_init();
 
     fflush(stdout);
     //esp_restart();
