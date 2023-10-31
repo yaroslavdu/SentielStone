@@ -6,3 +6,7 @@ cmake_minimum_required(VERSION 3.16)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(sentiel_stone VERSION 1.0.0 Languages C)
+
+
+# COMPONENT_ADD_INCLUDEDIRS := .  core/inc platform/inc
+# COMPONENT_SRCDIRS := . core/src platform/src

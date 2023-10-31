@@ -540,7 +540,7 @@ const char * vl53l0x_config (vl53l0x_t * cfg, int8_t port, int8_t scl, int8_t sd
 {
    if (port < 0 || scl < 0 || sda < 0 || scl == sda)
       return "Parameter error";
-   if (!GPIO_IS_VALID_OUTPUT_GPIO (scl) || !GPIO_IS_VALID_OUTPUT_GPIO (sda) || (xshut >= 0 && !GPIO_IS_VALID_OUTPUT_GPIO (xshut)))
+   if (!GPIO_IS_VALID_OUTPUT_GPIO (scl) || !GPIO_IS_VALID_OUTPUT_GPIO (sda) || (xshut >= 0 && !GPIO_IS_VALID_OUTPUT_GPIO(xshut)))
       return "GPIO not valid error";
    if (i2c_driver_install (port, I2C_MODE_MASTER, 0, 0, 0))
       return "I2C driver install error";              // Uh?
@@ -596,9 +596,9 @@ vl53l0x_init (vl53l0x_t * v)
    if (v->xshut >= 0)
    {                            // XSHUT or power control
       gpio_set_level (v->xshut, 0);     // Off
-      usleep (100000);
-      gpio_set_level (v->xshut, 0);     // On
-      usleep (10000);           // Plenty of time to boot (data sheet says 1.2ms)
+      usleep (3000);
+      gpio_set_level (v->xshut, 1);     // On
+      usleep (3000);           // Plenty of time to boot (data sheet says 1.2ms)
    }
    // sensor uses 1V8 mode for I/O by default; switch to 2V8 mode if necessary
    if (v->io_2v8)

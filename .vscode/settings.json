@@ -15,7 +15,8 @@
     "idf.pythonBinPathWin": "C:\\Users\\iadu\\.espressif\\python_env\\idf5.1_py3.11_env\\Scripts\\python.exe",
     "idf.toolsPathWin": "C:\\Users\\iadu\\.espressif",
     "files.associations": {
-        "vl53l0x.h": "c"
+        "vl53l0x.h": "c",
+        "vl53l0x_user.h": "c"
     },
     "idf.flashType": "UART"
 }

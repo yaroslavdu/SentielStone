@@ -12,8 +12,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <esp_log.h>
-#include <esp_log_internal.h>
+// #include <esp_log.h>
+// #include <esp_log_internal.h>
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -23,7 +23,8 @@
 
 #include "driver/gpio.h"
 #include "pn532_user.h"
-#include "vl53l0x_user.h"
+// #include "vl53l0x_user.h"
+// #include "vl53l0x_api.h"
 #include "driver/spi_master.h"
 
 static void startup_debug(void) {
@@ -57,8 +58,8 @@ void app_main(void)
 {
     startup_debug();
 
-    //pn532_init();
-    prox_init();
+    pn532_init();
+    // prox_init();
 
     fflush(stdout);
     //esp_restart();
