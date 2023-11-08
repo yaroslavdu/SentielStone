@@ -1,6 +1,7 @@
 set(sources
     ${API_SRCS}
     "main.c"
+    "app/msm/msm.c"
     "drivers/pn532/pn532.c"
     "drivers/pn532/pn532_user.c"
     # "drivers/vl53l0x/vl53l0x.c"
@@ -23,6 +24,7 @@ set(sources
 set(includes
     ${API_INCLUDES}
     "."
+    "app/msm"
     "drivers/i2c_driver/"
     "drivers/vl53l0x_2"
     "drivers/vl53l0x_2/core/inc"

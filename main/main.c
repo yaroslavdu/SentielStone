@@ -26,6 +26,8 @@
 #include "vl53l0x_user.h"
 // #include "vl53l0x_api.h"
 #include "driver/spi_master.h"
+#include "msm.h"
+#include "esp_timer.h"
 
 static void startup_debug(void) {
     /* Print chip information */
@@ -58,9 +60,14 @@ void app_main(void)
 {
     startup_debug();
 
-    //pn532_init();
-    prox_init();
 
+    pn532_init();
+    //prox_init();
+    //msm_init();
     fflush(stdout);
     //esp_restart();
+
+    for (;;) {
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+    }
 }

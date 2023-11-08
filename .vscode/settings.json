@@ -16,7 +16,8 @@
     "idf.toolsPathWin": "C:\\Users\\iadu\\.espressif",
     "files.associations": {
         "vl53l0x.h": "c",
-        "vl53l0x_user.h": "c"
+        "vl53l0x_user.h": "c",
+        "esp_log.h": "c"
     },
     "idf.flashType": "UART"
 }
