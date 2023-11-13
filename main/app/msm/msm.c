@@ -29,6 +29,8 @@ static void msm_on_enter_state(msm_state_e state) {
         case MSM_STATE_WAIT_FOR_NFC:
             nfc_read_start();
             break;
+        case MSM_STATE_WAIT_FOR_OBJECT_REMOVING:
+            prox_start_scan_object_removed();
 
         default:
             /* Do nothing. */
@@ -68,6 +70,7 @@ static msm_state_e msm_process_event(msm_event_e event) {
                 case MSM_EVT_OBJECT_DETECTED:
                     new_state = MSM_STATE_WAIT_FOR_NFC;
                     break;
+                case MSM_EVT_OBJECT_REMOVED:
                 case MSM_EVT_NFC_FOUND:
                 case MSM_EVT_NFC_NOT_FOUND:
                 case MSM_EVT_COUNT:
@@ -78,13 +81,26 @@ static msm_state_e msm_process_event(msm_event_e event) {
         case MSM_STATE_WAIT_FOR_NFC:
             switch (event) {
                 case MSM_EVT_NFC_FOUND:
-                    new_state = MSM_STATE_WAIT_FOR_OBJECT;
+                    new_state = MSM_STATE_WAIT_FOR_OBJECT_REMOVING;
                     //led_indicate(PASS_INDK);
                     break;
                 case MSM_EVT_NFC_NOT_FOUND:
                     //led_indicate(ALARM_INDK);
+                    new_state = MSM_STATE_WAIT_FOR_OBJECT_REMOVING;
+                    break;
+                case MSM_EVT_OBJECT_REMOVED:
+                case MSM_EVT_COUNT:
+                case MSM_EVT_OBJECT_DETECTED:
+                    break;
+            }
+            break;
+        case MSM_STATE_WAIT_FOR_OBJECT_REMOVING:
+            switch (event) {
+                case MSM_EVT_OBJECT_REMOVED:
                     new_state = MSM_STATE_WAIT_FOR_OBJECT;
                     break;
+                case MSM_EVT_NFC_FOUND:
+                case MSM_EVT_NFC_NOT_FOUND:
                 case MSM_EVT_COUNT:
                 case MSM_EVT_OBJECT_DETECTED:
                     break;
