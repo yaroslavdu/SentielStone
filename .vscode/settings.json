@@ -17,7 +17,8 @@
     "files.associations": {
         "vl53l0x.h": "c",
         "vl53l0x_user.h": "c",
-        "esp_log.h": "c"
+        "esp_log.h": "c",
+        "gpio.h": "c"
     },
     "idf.flashType": "UART"
 }

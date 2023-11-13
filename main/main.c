@@ -28,6 +28,7 @@
 #include "driver/spi_master.h"
 #include "msm.h"
 #include "esp_timer.h"
+#include "esp_log.h"
 
 static void startup_debug(void) {
     /* Print chip information */
@@ -60,10 +61,12 @@ void app_main(void)
 {
     startup_debug();
 
+    esp_log_level_set(__FUNCTION__, ESP_LOG_INFO);
 
     pn532_init();
-    //prox_init();
-    //msm_init();
+    prox_init();
+    msm_init();
+    send_msm_event(5);
     fflush(stdout);
     //esp_restart();
 

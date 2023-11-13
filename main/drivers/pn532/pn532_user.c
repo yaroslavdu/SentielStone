@@ -54,7 +54,7 @@ static esp_timer_handle_t   nfc_read_timer;
 
 
 
-void nfc_read_tag(void) {
+int nfc_read_tag(void) {
     uint8_t success;
     uint8_t uid[] = {0, 0, 0, 0, 0, 0, 0}; // Buffer to store the returned UID
     uint8_t uidLength;                     // Length of the UID (4 or 7 bytes depending on ISO14443A card type)
@@ -69,30 +69,30 @@ void nfc_read_tag(void) {
         ESP_LOGI(__FUNCTION__, "UID Length: %d bytes", uidLength);
         ESP_LOGI(__FUNCTION__, "UID Value:");
         esp_log_buffer_hexdump_internal(__FUNCTION__, uid, uidLength, ESP_LOG_INFO);
-        xTaskNotify(m_nfc_task, NFC_IDLE, eSetValueWithOverwrite);
+        //xTaskNotify(m_nfc_task, NFC_IDLE, eSetValueWithOverwrite);
+        esp_timer_stop(nfc_read_timer);
         send_msm_event(MSM_EVT_NFC_FOUND);
+        return 0;
     }
+    return -1;
 }
 
-
+uint8_t nfc_reat_timeout_fl = 0;
 void nfc_execute() {
     BaseType_t      xResult;
     static uint32_t        nfc_cmd;
 
     xResult = xTaskNotifyWait(0, 0, &nfc_cmd, portMAX_DELAY);
 
-    if (nfc_cmd != NFC_START_SCAN) {
-        return;
-    } else {
-        esp_timer_start_once(&nfc_read_timer, 200000); //200ms
-        ESP_LOGI(__FUNCTION__, "NFC scan start");
+
+    esp_timer_start_once(nfc_read_timer, 5000000); //200ms
+    nfc_reat_timeout_fl = 1;
+    ESP_LOGI(__FUNCTION__, "NFC scan start");
+
+    while (nfc_read_tag() && nfc_reat_timeout_fl) {
+        vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 
-    do {
-        nfc_read_tag();
-        xResult = xTaskNotifyWait(0, 0, &nfc_cmd, 0);
-        vTaskDelay(10 / portTICK_PERIOD_MS);
-    } while (nfc_cmd == NFC_IDLE);
 }
 
 
@@ -105,8 +105,8 @@ void nfc_task(void *pvParameter) {
 
 static void nfc_read_timer_callback(void* arg) {
     ESP_LOGI(__FUNCTION__, "NFC scan expired");
+    nfc_reat_timeout_fl = 0;
     send_msm_event(MSM_EVT_NFC_NOT_FOUND);
-    xTaskNotify(m_nfc_task, NFC_IDLE, eSetValueWithOverwrite);
 }
 
 void nfc_read_start(void) {
@@ -140,5 +140,5 @@ void pn532_init(void) {
     ESP_ERROR_CHECK(esp_timer_create(&nfc_read_timer_args, &nfc_read_timer));
     
 
-    xTaskCreate(&nfc_task, "nfc_task", 4096, NULL, 4, m_nfc_task);
+    xTaskCreate(nfc_task, "nfc_task", 4096, NULL, 4, &m_nfc_task);
 }
