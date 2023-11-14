@@ -62,40 +62,40 @@ int nfc_read_tag(void) {
     // Wait for an ISO14443A type cards (Mifare, etc.).  When one is found
     // 'uid' will be populated with the UID, and uidLength will indicate
     // if the uid is 4 bytes (Mifare Classic) or 7 bytes (Mifare Ultralight)
-    success = pn532_readPassiveTargetID(&nfc, PN532_MIFARE_ISO14443A, uid, &uidLength, 0);
-
+    success = pn532_readPassiveTargetID(&nfc, PN532_MIFARE_ISO14443A, uid, &uidLength, 1);
     if (success) {
         // Display some basic information about the card
-        ESP_LOGI(__FUNCTION__, "UID Length: %d bytes", uidLength);
         ESP_LOGI(__FUNCTION__, "UID Value:");
         esp_log_buffer_hexdump_internal(__FUNCTION__, uid, uidLength, ESP_LOG_INFO);
         //xTaskNotify(m_nfc_task, NFC_IDLE, eSetValueWithOverwrite);
         esp_timer_stop(nfc_read_timer);
-        send_msm_event(MSM_EVT_NFC_FOUND);
-        return 0;
+
+        return 1;
     }
-    return -1;
+    return 0;
 }
 
-uint8_t nfc_reat_timeout_fl = 0;
+uint8_t nfc_read_timeout_fl = 0;
 void nfc_execute() {
     BaseType_t      xResult;
     static uint32_t        nfc_cmd;
 
     xResult = xTaskNotifyWait(0, 0, &nfc_cmd, portMAX_DELAY);
 
-
     esp_timer_start_once(nfc_read_timer, 5000000); //200ms
-    nfc_reat_timeout_fl = 1;
+    nfc_read_timeout_fl = 1;
     ESP_LOGI(__FUNCTION__, "NFC scan start");
 
-    while (nfc_read_tag() && nfc_reat_timeout_fl) {
-        vTaskDelay(100 / portTICK_PERIOD_MS);
+    while (nfc_read_timeout_fl) {
+        if(nfc_read_tag()) {
+            send_msm_event(MSM_EVT_NFC_FOUND);
+            return;
+        }
+        ESP_LOGI(__FUNCTION__, "NFC read ...");
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
-
+    send_msm_event(MSM_EVT_NFC_NOT_FOUND);
 }
-
-
 
 void nfc_task(void *pvParameter) {
     while (1) {
@@ -105,8 +105,8 @@ void nfc_task(void *pvParameter) {
 
 static void nfc_read_timer_callback(void* arg) {
     ESP_LOGI(__FUNCTION__, "NFC scan expired");
-    nfc_reat_timeout_fl = 0;
-    send_msm_event(MSM_EVT_NFC_NOT_FOUND);
+    nfc_read_timeout_fl = 0;
+
 }
 
 void nfc_read_start(void) {

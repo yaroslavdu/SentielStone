@@ -14,11 +14,40 @@ static TaskHandle_t  m_msm_task = NULL;
 
 static msm_state_e m_msm_curr_state; /* Main State Machine current state */
 
+static char* msm_state_to_text(msm_state_e state) {
+    static char* state_names[] = {
+        "MSM_STATE_IDLE",
+        "MSM_STATE_WAIT_FOR_OBJECT",
+        "MSM_STATE_WAIT_FOR_NFC",
+        "MSM_STATE_WAIT_FOR_OBJECT_REMOVING",
+    };
+
+    if (state < MSM_STATE_COUNT) {
+        return state_names[state];
+    } else {
+        return "State undefined";
+    }
+}
+
+static char* msm_event_to_text(msm_event_e event) {
+    static char* event_names[] = {
+        "MSM_EVT_OBJECT_DETECTED",
+        "MSM_EVT_OBJECT_REMOVED",
+        "MSM_EVT_NFC_FOUND",
+        "MSM_EVT_NFC_NOT_FOUND",
+    };
+    
+    if (event < MSM_EVT_COUNT) {
+        return event_names[event];
+    } else {
+        return "Event undefined";
+    }
+}
 /** @brief Processing an enter to new MSM state. */
 static void msm_on_enter_state(msm_state_e state) {
 
 
-    ESP_LOGI(__FUNCTION__, "New MSM state: (%d)", state);
+    ESP_LOGI(__FUNCTION__, "New MSM state: %s(%d)", msm_state_to_text(state), state);
     switch (state) {
 
         case MSM_STATE_IDLE:
@@ -53,7 +82,8 @@ static void msm_on_exit_state(msm_state_e state) {
 
 static msm_state_e msm_process_event(msm_event_e event) {
 
-    ESP_LOGI(__FUNCTION__, "MSM process event: (%d) in state: (%d)", event, m_msm_curr_state);
+    ESP_LOGI(__FUNCTION__, "MSM process event: %s(%d) in state: %s(%d)", \
+                        msm_event_to_text(event), event, msm_state_to_text(m_msm_curr_state),  m_msm_curr_state);
     msm_state_e new_state = m_msm_curr_state; /* assume not change state if event isn't processed */
 
     switch (m_msm_curr_state) {
@@ -132,41 +162,7 @@ static msm_state_e msm_process_event(msm_event_e event) {
     return new_state;
 }
 
-char* msm_state_to_text(msm_state_e state) {
-    static char* state_names[] = {
-        "MSM_STATE_IDLE",
-        "MSM_STATE_LOW_BATTERY",
-        "MSM_STATE_WAIT_FOR_OBJECT",
-        "MSM_STATE_WAIT_FOR_NFC",
-        "MSM_STATE_WAIT_FOR_NFC_IN_ADMIN_MODE",
-        "MSM_STATE_LED_INDICATE",
-};
-    //STATIC_ASSERT(sizeof(state_names) / sizeof(state_names[0]) == MSM_STATE_COUNT, "Size of state_names not equal MSM_STATE_COUNT");
 
-    if (state < MSM_STATE_COUNT) {
-        return state_names[state];
-    } else {
-        return "State undefined";
-    }
-}
-
-// char* msm_event_to_text(msm_event_e event) {
-//     static char* event_names[] = {
-//         "MSM_EVT_BOOT",
-//         "MSM_EVT_ERROR",
-//         "MSM_EVT_NFC_FOUND",
-//         "MSM_EVT_NFC_NOT_FOUND",
-//         "MSM_EVT_USR_BTN_PRESS",
-//         "MSM_EVT_OBJECT_DETECTED",
-//         "MSM_EVT_OBJECT_REMOVED",
-// };
-//     //STATIC_ASSERT(sizeof(event_names) / sizeof(event_names[0]) == MSM_EVT_COUNT, "Size of event_names not equal MSM_EVT_COUNT");
-//     if (event < MSM_EVT_COUNT) {
-//         return event_names[event];
-//     } else {
-//         return "Event undefined";
-//     }
-// }
 
 /** @brief Main State Machine executing */
 bool msm_execute(void) {
