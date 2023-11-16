@@ -24,7 +24,7 @@
 #include "driver/gpio.h"
 #include "pn532_user.h"
 #include "vl53l0x_user.h"
-// #include "vl53l0x_api.h"
+#include "cap_touch.h"
 #include "driver/spi_master.h"
 #include "msm.h"
 #include "esp_timer.h"
@@ -64,7 +64,9 @@ void app_main(void)
     esp_log_level_set(__FUNCTION__, ESP_LOG_INFO);
 
     pn532_init();
-    prox_init();
+    //prox_init();
+    cap_touch_init();
+
     msm_init();
     send_msm_event(5);
     fflush(stdout);
