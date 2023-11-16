@@ -8,9 +8,10 @@
 #include "msm.h"
 #include "vl53l0x_user.h"
 #include "pn532_user.h"
+#include "cap_touch.h"
 
 static QueueHandle_t m_msm_queue_handle = NULL;  /* Queue used by MSM to receive messages from all other tasks/ISRs */
-static TaskHandle_t  m_msm_task = NULL;
+static const TaskHandle_t  m_msm_task = NULL;
 
 static msm_state_e m_msm_curr_state; /* Main State Machine current state */
 
@@ -53,14 +54,14 @@ static void msm_on_enter_state(msm_state_e state) {
         case MSM_STATE_IDLE:
             break;
         case MSM_STATE_WAIT_FOR_OBJECT:
-            prox_start_scan();
+            capt_start_scan_object();
             break;
         case MSM_STATE_WAIT_FOR_NFC:
             nfc_read_start();
             break;
         case MSM_STATE_WAIT_FOR_OBJECT_REMOVING:
-            prox_start_scan_object_removed();
-
+            capt_start_scan_clear_zone();
+            break;
         default:
             /* Do nothing. */
             break;

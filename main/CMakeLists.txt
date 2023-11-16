@@ -4,6 +4,7 @@ set(sources
     "app/msm/msm.c"
     "drivers/pn532/pn532.c"
     "drivers/pn532/pn532_user.c"
+    "drivers/cap_touch/cap_touch.c"
     # "drivers/vl53l0x/vl53l0x.c"
     # "drivers/vl53l0x/vl53l0x_user.c"
     "drivers/i2c_driver/i2c_driver.c"
@@ -30,6 +31,7 @@ set(includes
     "drivers/vl53l0x_2/core/inc"
     "drivers/vl53l0x_2/platform/inc"
     "drivers/pn532"
+    "drivers/cap_touch"
 )
 
 idf_component_register(SRCS ${sources}
