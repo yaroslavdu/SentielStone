@@ -6,7 +6,6 @@
 #include "esp_log.h"
 
 #include "msm.h"
-#include "vl53l0x_user.h"
 #include "pn532_user.h"
 #include "cap_touch.h"
 
@@ -20,6 +19,7 @@ static char* msm_state_to_text(msm_state_e state) {
         "MSM_STATE_IDLE",
         "MSM_STATE_WAIT_FOR_OBJECT",
         "MSM_STATE_WAIT_FOR_NFC",
+        "MSM_STATE_INDICATE",
         "MSM_STATE_WAIT_FOR_OBJECT_REMOVING",
     };
 
@@ -36,6 +36,7 @@ static char* msm_event_to_text(msm_event_e event) {
         "MSM_EVT_OBJECT_REMOVED",
         "MSM_EVT_NFC_FOUND",
         "MSM_EVT_NFC_NOT_FOUND",
+        "MSM_EVT_INDICATION_END",
     };
     
     if (event < MSM_EVT_COUNT) {
@@ -102,6 +103,7 @@ static msm_state_e msm_process_event(msm_event_e event) {
                     new_state = MSM_STATE_WAIT_FOR_NFC;
                     break;
                 case MSM_EVT_OBJECT_REMOVED:
+                case MSM_EVT_INDICATION_END:
                 case MSM_EVT_NFC_FOUND:
                 case MSM_EVT_NFC_NOT_FOUND:
                 case MSM_EVT_COUNT:
@@ -112,16 +114,29 @@ static msm_state_e msm_process_event(msm_event_e event) {
         case MSM_STATE_WAIT_FOR_NFC:
             switch (event) {
                 case MSM_EVT_NFC_FOUND:
-                    new_state = MSM_STATE_WAIT_FOR_OBJECT_REMOVING;
+                    new_state = MSM_STATE_INDICATE;
                     //led_indicate(PASS_INDK);
                     break;
                 case MSM_EVT_NFC_NOT_FOUND:
                     //led_indicate(ALARM_INDK);
-                    new_state = MSM_STATE_WAIT_FOR_OBJECT_REMOVING;
+                    new_state = MSM_STATE_INDICATE;
                     break;
                 case MSM_EVT_OBJECT_REMOVED:
                 case MSM_EVT_COUNT:
                 case MSM_EVT_OBJECT_DETECTED:
+                case MSM_EVT_INDICATION_END:
+                    break;
+            }
+            break;
+        case MSM_STATE_INDICATE:
+            switch (event) {
+                case MSM_EVT_INDICATION_END:
+                    new_state = MSM_STATE_WAIT_FOR_OBJECT_REMOVING;
+                case MSM_EVT_OBJECT_REMOVED:
+                case MSM_EVT_COUNT:
+                case MSM_EVT_OBJECT_DETECTED:
+                case MSM_EVT_NFC_NOT_FOUND:
+                case MSM_EVT_NFC_FOUND:
                     break;
             }
             break;
@@ -134,6 +149,7 @@ static msm_state_e msm_process_event(msm_event_e event) {
                 case MSM_EVT_NFC_NOT_FOUND:
                 case MSM_EVT_COUNT:
                 case MSM_EVT_OBJECT_DETECTED:
+                case MSM_EVT_INDICATION_END:
                     break;
             }
             break;

@@ -10,8 +10,8 @@
 #define TOUCH_PAD_GPIO4_CHANNEL TOUCH_PAD_NUM0
 static TaskHandle_t         m_cap_touch_task = NULL;
 
-#define CAPT_THRESH_UP      1500
-#define CAPT_THRESH_DOWN    400
+#define CAPT_THRESH_UP      185
+#define CAPT_THRESH_DOWN    140
 
 int capt_detect_object(void) {
     uint16_t val;
@@ -57,13 +57,13 @@ void capt_execute(void){
             break;
         case CAP_TOUCH_CMD_DETECT_OBJECT:
             while (capt_detect_object()) {
-                vTaskDelay(1000 / portTICK_PERIOD_MS);
+                vTaskDelay(500 / portTICK_PERIOD_MS);
             }
             send_msm_event(MSM_EVT_OBJECT_DETECTED);
             break;
         case CAP_TOUCH_CMD_DETECT_CLEAR_ZONE:
             while (capt_detect_clear_zone()) {
-                vTaskDelay(1000 / portTICK_PERIOD_MS);
+                vTaskDelay(500 / portTICK_PERIOD_MS);
             }
             send_msm_event(MSM_EVT_OBJECT_REMOVED);
             break;
@@ -77,7 +77,7 @@ void cap_touch_task(void) {
 
 void cap_touch_init(void) {
     touch_pad_init();
-    touch_pad_set_voltage(TOUCH_HVOLT_2V7, TOUCH_LVOLT_0V5, TOUCH_HVOLT_ATTEN_1V5);
+    touch_pad_set_voltage(TOUCH_HVOLT_2V7, TOUCH_LVOLT_0V5, TOUCH_HVOLT_ATTEN_1V);
     touch_pad_config(TOUCH_PAD_GPIO4_CHANNEL, -1);
     touch_pad_filter_start(10);
 
