@@ -23,7 +23,8 @@
 
 #include "driver/gpio.h"
 #include "pn532_user.h"
-#include "vl53l0x_user.h"
+#include "ws2812_api.h"
+
 #include "cap_touch.h"
 #include "driver/spi_master.h"
 #include "msm.h"
@@ -59,13 +60,15 @@ static void startup_debug(void) {
 
 void app_main(void)
 {
-    startup_debug();
+    //startup_debug();
 
     esp_log_level_set(__FUNCTION__, ESP_LOG_INFO);
-
+    
+    led_init();
     pn532_init();
     //prox_init();
     cap_touch_init();
+
 
     msm_init();
     send_msm_event(5);

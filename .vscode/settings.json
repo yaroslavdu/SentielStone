@@ -19,7 +19,9 @@
         "vl53l0x_user.h": "c",
         "esp_log.h": "c",
         "gpio.h": "c",
-        "vl53l0x_api.h": "c"
+        "vl53l0x_api.h": "c",
+        "rmt.h": "c",
+        "stdlib.h": "c"
     },
     "idf.flashType": "UART"
 }

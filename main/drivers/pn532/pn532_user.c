@@ -24,14 +24,23 @@
 #include "esp_timer.h"
 #include "esp_err.h"
 
+#include "ws2812_api.h"
+
 
 
 #define BLINK_GPIO      2
 
-#define PN532_SCK       32
-#define PN532_MOSI      26
-#define PN532_SS        25
-#define PN532_MISO      33
+// #define PN532_SCK       32
+// #define PN532_MOSI      26
+// #define PN532_SS        25
+// #define PN532_MISO      33
+
+
+#define PN532_SCK       26
+#define PN532_MOSI      33
+#define PN532_SS        32
+#define PN532_MISO      25
+
 
 static TaskHandle_t         m_nfc_task = NULL;
 
@@ -82,18 +91,19 @@ void nfc_execute() {
 
     xResult = xTaskNotifyWait(0, 0, &nfc_cmd, portMAX_DELAY);
 
-    esp_timer_start_once(nfc_read_timer, 5000000); //200ms
+    esp_timer_start_once(nfc_read_timer, 1100000); //0.5s
     nfc_read_timeout_fl = 1;
     ESP_LOGI(__FUNCTION__, "NFC scan start");
 
     while (nfc_read_timeout_fl) {
         if(nfc_read_tag()) {
+            led_start_indicate(COLOR_GREEN);
             send_msm_event(MSM_EVT_NFC_FOUND);
             return;
         }
-        ESP_LOGI(__FUNCTION__, "NFC read ...");
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        vTaskDelay(100 / portTICK_PERIOD_MS);
     }
+    led_start_indicate(COLOR_RED);
     send_msm_event(MSM_EVT_NFC_NOT_FOUND);
 }
 
@@ -140,5 +150,5 @@ void pn532_init(void) {
     ESP_ERROR_CHECK(esp_timer_create(&nfc_read_timer_args, &nfc_read_timer));
     
 
-    xTaskCreate(nfc_task, "nfc_task", 4096, NULL, 4, &m_nfc_task);
+    xTaskCreate(nfc_task, "nfc_task", 4096, NULL, 3, &m_nfc_task);
 }
