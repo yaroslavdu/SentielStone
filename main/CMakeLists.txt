@@ -8,6 +8,8 @@ set(sources
     "drivers/ws2812/ws2812.c"
     "drivers/ws2812/ws2812_api.c"
     "drivers/i2c_driver/i2c_driver.c"
+    "drivers/button/button.c"
+    "drivers/button/button_api.c"
 
 )
 
@@ -19,6 +21,7 @@ set(includes
     "drivers/pn532"
     "drivers/cap_touch"
     "drivers/ws2812"
+    "drivers/button"
 )
 
 idf_component_register(SRCS ${sources}

@@ -7,6 +7,6 @@
 #define COLOR_NONE      3
 
 void led_init();
-void led_start_indicate(uint8_t color);
+void led_indicate(uint8_t color, uint32_t pulse_time, uint8_t repetitions);
 
 #endif //WS2812_API_H
