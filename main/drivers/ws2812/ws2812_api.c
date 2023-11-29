@@ -23,6 +23,7 @@ static const char *TAG = "example";
 static TaskHandle_t         m_led_task = NULL;
 
 static uint8_t led_strip_pixels[EXAMPLE_LED_NUMBERS * 3];
+static uint8_t led_strip_pixels_off[EXAMPLE_LED_NUMBERS * 3];
 
 /**
  * @brief Simple helper function, converting HSV color space to RGB color space
@@ -90,17 +91,23 @@ led_strip_encoder_config_t encoder_config = {
     .resolution = RMT_LED_STRIP_RESOLUTION_HZ,
 };
 
+rmt_transmit_config_t tx_config = {
+        .loop_count = 0, // no transfer loop
+    };
 
-void led_indicate(uint8_t color) {
+void led_all_off(void) {
+    memset(led_strip_pixels_off, 0, sizeof(led_strip_pixels_off));
+    ESP_ERROR_CHECK(rmt_transmit(led_chan, led_encoder, led_strip_pixels_off, sizeof(led_strip_pixels_off), &tx_config));
+    ESP_ERROR_CHECK(rmt_tx_wait_all_done(led_chan, portMAX_DELAY));
+}
+
+void led_indicate(uint8_t color, uint32_t pulse_time, uint8_t repetitions) {
     uint32_t red = 0;
     uint32_t green = 0;
     uint32_t blue = 0;
     uint16_t hue = 0;
     uint16_t start_rgb = 0;
 
-    rmt_transmit_config_t tx_config = {
-        .loop_count = 0, // no transfer loop
-    };
 
     switch (color) {
         case COLOR_NONE:
@@ -132,15 +139,17 @@ void led_indicate(uint8_t color) {
             }
             break;
     }
-
-    ESP_ERROR_CHECK(rmt_transmit(led_chan, led_encoder, led_strip_pixels, sizeof(led_strip_pixels), &tx_config));
-    ESP_ERROR_CHECK(rmt_tx_wait_all_done(led_chan, portMAX_DELAY));
-    vTaskDelay(2000 / portTICK_PERIOD_MS);
-    memset(led_strip_pixels, 0, sizeof(led_strip_pixels));
-    ESP_ERROR_CHECK(rmt_transmit(led_chan, led_encoder, led_strip_pixels, sizeof(led_strip_pixels), &tx_config));
-    ESP_ERROR_CHECK(rmt_tx_wait_all_done(led_chan, portMAX_DELAY));
-    send_msm_event(MSM_EVT_INDICATION_END);
+    led_all_off();
+    for (int i=0; i < repetitions; i++) {
+        ESP_ERROR_CHECK(rmt_transmit(led_chan, led_encoder, led_strip_pixels, sizeof(led_strip_pixels), &tx_config));
+        ESP_ERROR_CHECK(rmt_tx_wait_all_done(led_chan, portMAX_DELAY));
+        vTaskDelay(pulse_time / portTICK_PERIOD_MS);
+        led_all_off();
+        vTaskDelay(pulse_time / portTICK_PERIOD_MS);
+    }
 }
+
+
 
 
 void led_execute(void) {
@@ -149,7 +158,9 @@ void led_execute(void) {
 
     xResult = xTaskNotifyWait(0, 0, &led_cmd, portMAX_DELAY);
 
-    led_indicate(led_cmd);
+    // switch ()
+
+    // led_indicate(led_cmd);
 }
 
 void led_task(void) {
@@ -175,12 +186,16 @@ void led_init(void)
     ESP_LOGI(TAG, "Start LED rainbow chase");
 
 
-    xTaskCreate(led_task, "led_task", 4096, NULL, 4, &m_led_task);
-    ESP_LOGI(__FUNCTION__, "cap_touch_task created");
+    // xTaskCreate(led_task, "led_task", 4096, NULL, 4, &m_led_task);
+    // ESP_LOGI(__FUNCTION__, "cap_touch_task created");
 }
 
 void led_start_indicate(uint8_t color) {
     xTaskNotify(m_led_task, color, eSetValueWithOverwrite);
 }
+
+// void led_start_indicate(uint8_t color) {
+//     xTaskNotify(m_led_task, color, eSetValueWithOverwrite);
+// }
 
 

@@ -57,12 +57,18 @@ void capt_execute(void){
             break;
         case CAP_TOUCH_CMD_DETECT_OBJECT:
             while (capt_detect_object()) {
+                xTaskNotifyWait(0, 0, &cap_touch_cmd, 0);
+                if (cap_touch_cmd == CAP_TOUCH_CMD_STOP) {
+                    ESP_LOGI(__FUNCTION__, "aborting cap touch scan due to entering admin mode");
+                    return;
+                }
                 vTaskDelay(500 / portTICK_PERIOD_MS);
             }
             send_msm_event(MSM_EVT_OBJECT_DETECTED);
             break;
         case CAP_TOUCH_CMD_DETECT_CLEAR_ZONE:
-            while (capt_detect_clear_zone()) {
+            while (capt_detect_clear_zone()){
+                xTaskNotifyWait(0, 0, &cap_touch_cmd, 0);
                 vTaskDelay(500 / portTICK_PERIOD_MS);
             }
             send_msm_event(MSM_EVT_OBJECT_REMOVED);
@@ -92,3 +98,8 @@ void capt_start_scan_object(void) {
 void capt_start_scan_clear_zone(void) {
     xTaskNotify(m_cap_touch_task, CAP_TOUCH_CMD_DETECT_CLEAR_ZONE, eSetValueWithOverwrite);
 }
+
+void capt_stop_scan(void) {
+    xTaskNotify(m_cap_touch_task, CAP_TOUCH_CMD_STOP, eSetValueWithOverwrite);
+}
+

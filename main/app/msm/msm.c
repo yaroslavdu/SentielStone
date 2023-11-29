@@ -10,7 +10,7 @@
 #include "cap_touch.h"
 
 static QueueHandle_t m_msm_queue_handle = NULL;  /* Queue used by MSM to receive messages from all other tasks/ISRs */
-static const TaskHandle_t  m_msm_task = NULL;
+static const TaskHandle_t m_msm_task = NULL;
 
 static msm_state_e m_msm_curr_state; /* Main State Machine current state */
 
@@ -19,8 +19,8 @@ static char* msm_state_to_text(msm_state_e state) {
         "MSM_STATE_IDLE",
         "MSM_STATE_WAIT_FOR_OBJECT",
         "MSM_STATE_WAIT_FOR_NFC",
-        "MSM_STATE_INDICATE",
         "MSM_STATE_WAIT_FOR_OBJECT_REMOVING",
+        "MSM_STATE_WAIT_FOR_NFC_IN_ADMIN_MODE"
     };
 
     if (state < MSM_STATE_COUNT) {
@@ -34,9 +34,8 @@ static char* msm_event_to_text(msm_event_e event) {
     static char* event_names[] = {
         "MSM_EVT_OBJECT_DETECTED",
         "MSM_EVT_OBJECT_REMOVED",
-        "MSM_EVT_NFC_FOUND",
-        "MSM_EVT_NFC_NOT_FOUND",
-        "MSM_EVT_INDICATION_END",
+        "MSM_EVT_NFC_READ_DONE",
+        "MSM_EVT_BTN_SINGLE_PRESS"
     };
     
     if (event < MSM_EVT_COUNT) {
@@ -63,6 +62,9 @@ static void msm_on_enter_state(msm_state_e state) {
         case MSM_STATE_WAIT_FOR_OBJECT_REMOVING:
             capt_start_scan_clear_zone();
             break;
+        case MSM_STATE_WAIT_FOR_NFC_IN_ADMIN_MODE:
+            nfc_logging_start();
+            break;
         default:
             /* Do nothing. */
             break;
@@ -72,14 +74,19 @@ static void msm_on_enter_state(msm_state_e state) {
 /** @brief Processing the exit from MSM state. */
 static void msm_on_exit_state(msm_state_e state) {
     switch (state) {
-    case MSM_STATE_IDLE:
-        //app_timer_stop(m_N_seconds_of_inactivity);
-        break;
-
-    default:
-        /* Do nothing. */
-        break;
-    }
+        case MSM_STATE_IDLE:
+            //app_timer_stop(m_N_seconds_of_inactivity);
+            break;
+        case MSM_STATE_WAIT_FOR_OBJECT:
+            capt_stop_scan();
+            break;
+        case MSM_STATE_WAIT_FOR_NFC_IN_ADMIN_MODE:
+            nfc_logging_stop();
+            break;
+        default:
+            /* Do nothing. */
+            break;
+        }
 };
 
 static msm_state_e msm_process_event(msm_event_e event) {
@@ -92,20 +99,18 @@ static msm_state_e msm_process_event(msm_event_e event) {
         /* ------------- MSM_STATE_IDLE --------------------- */
         case MSM_STATE_IDLE:
             new_state = MSM_STATE_WAIT_FOR_OBJECT;
-        case MSM_STATE_COUNT:
             break;
+        /* ------------- MSM_STATE_WAIT_FOR_OBJECT ------------ */
         case MSM_STATE_WAIT_FOR_OBJECT:
             switch (event) {
-                // case MSM_EVT_USR_BTN_PRESS:
-                //     new_state = MSM_STATE_WAIT_FOR_NFC_IN_ADMIN_MODE;
-                //     break;
                 case MSM_EVT_OBJECT_DETECTED:
                     new_state = MSM_STATE_WAIT_FOR_NFC;
                     break;
+                case MSM_EVT_BTN_SINGLE_PRESS:
+                    new_state = MSM_STATE_WAIT_FOR_NFC_IN_ADMIN_MODE;
+                    break;
                 case MSM_EVT_OBJECT_REMOVED:
-                case MSM_EVT_INDICATION_END:
-                case MSM_EVT_NFC_FOUND:
-                case MSM_EVT_NFC_NOT_FOUND:
+                case MSM_EVT_NFC_READ_DONE:
                 case MSM_EVT_COUNT:
                     break;
             }
@@ -113,30 +118,13 @@ static msm_state_e msm_process_event(msm_event_e event) {
         /* ------------- MSM_STATE_WAIT_FOR_NFC ------------- */
         case MSM_STATE_WAIT_FOR_NFC:
             switch (event) {
-                case MSM_EVT_NFC_FOUND:
-                    new_state = MSM_STATE_INDICATE;
-                    //led_indicate(PASS_INDK);
-                    break;
-                case MSM_EVT_NFC_NOT_FOUND:
-                    //led_indicate(ALARM_INDK);
-                    new_state = MSM_STATE_INDICATE;
-                    break;
-                case MSM_EVT_OBJECT_REMOVED:
-                case MSM_EVT_COUNT:
-                case MSM_EVT_OBJECT_DETECTED:
-                case MSM_EVT_INDICATION_END:
-                    break;
-            }
-            break;
-        case MSM_STATE_INDICATE:
-            switch (event) {
-                case MSM_EVT_INDICATION_END:
+                case MSM_EVT_NFC_READ_DONE:
                     new_state = MSM_STATE_WAIT_FOR_OBJECT_REMOVING;
+                    break;
                 case MSM_EVT_OBJECT_REMOVED:
                 case MSM_EVT_COUNT:
                 case MSM_EVT_OBJECT_DETECTED:
-                case MSM_EVT_NFC_NOT_FOUND:
-                case MSM_EVT_NFC_FOUND:
+                case MSM_EVT_BTN_SINGLE_PRESS:
                     break;
             }
             break;
@@ -145,36 +133,27 @@ static msm_state_e msm_process_event(msm_event_e event) {
                 case MSM_EVT_OBJECT_REMOVED:
                     new_state = MSM_STATE_WAIT_FOR_OBJECT;
                     break;
-                case MSM_EVT_NFC_FOUND:
-                case MSM_EVT_NFC_NOT_FOUND:
+                case MSM_EVT_NFC_READ_DONE:
                 case MSM_EVT_COUNT:
                 case MSM_EVT_OBJECT_DETECTED:
-                case MSM_EVT_INDICATION_END:
+                case MSM_EVT_BTN_SINGLE_PRESS:
                     break;
             }
             break;
-        // case MSM_STATE_WAIT_FOR_NFC_IN_ADMIN_MODE:
-        //     switch (event) {
-        //         case MSM_EVT_USR_BTN_PRESS:
-        //             new_state = MSM_STATE_IDLE;
-        //             break;
-        //         case MSM_EVT_NFC_FOUND:
-        //             //storage_tag_add();
-        //             led_indicate(TAG_ADD_INDK);
-        //             break;
-        //         case MSM_EVT_NFC_NOT_FOUND:
-        //             //storage_tag_delete();
-        //             //led_indicate(TAG_DEL_INDK);
-        //             break;
-        //     }
-        // case MSM_STATE_LED_INDICATE:
-        //     switch (event) {
-        //         case MSM_EVT_LED_INDICATE_END:
-        //             new_state = MSM_STATE_IDLE;
-        //         break;
-        //     break;
-        //     }
-        // break;
+        case MSM_STATE_WAIT_FOR_NFC_IN_ADMIN_MODE:
+            switch (event) {
+                case MSM_EVT_BTN_SINGLE_PRESS:
+                    new_state = MSM_STATE_WAIT_FOR_OBJECT;
+                    break;
+                case MSM_EVT_NFC_READ_DONE:
+                case MSM_EVT_COUNT:
+                case MSM_EVT_OBJECT_DETECTED:
+                case MSM_EVT_OBJECT_REMOVED:
+                    break;
+            }
+            break;
+        case MSM_STATE_COUNT:
+            break;
     }
     return new_state;
 }

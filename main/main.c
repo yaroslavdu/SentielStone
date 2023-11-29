@@ -30,6 +30,7 @@
 #include "msm.h"
 #include "esp_timer.h"
 #include "esp_log.h"
+#include "button_api.h"
 
 static void startup_debug(void) {
     /* Print chip information */
@@ -68,7 +69,7 @@ void app_main(void)
     pn532_init();
     //prox_init();
     cap_touch_init();
-
+    btn_driver_init();
 
     msm_init();
     send_msm_event(5);

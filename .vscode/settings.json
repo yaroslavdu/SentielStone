@@ -21,7 +21,9 @@
         "gpio.h": "c",
         "vl53l0x_api.h": "c",
         "rmt.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "button_api.h": "c",
+        "button.h": "c"
     },
     "idf.flashType": "UART"
 }
